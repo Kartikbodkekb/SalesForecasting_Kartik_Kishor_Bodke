@@ -1,13 +1,10 @@
-﻿
-import numpy as np
+import numpy as np 
 import pandas as pd
 
+df = pd.read_csv('data/train.csv')
 
-df = df = pd.read_csv('data/train.csv')
-
-df.columns
+print(df.columns.tolist())
 df.head()
-
 df.info()
 
 df.shape
@@ -16,20 +13,21 @@ df.isnull().sum()
 
 df.duplicated().sum()
 
+df.columns
+
 df[df['Postal Code'].isnull()]
 
 df['Order Date'] = pd.to_datetime(df['Order Date'], dayfirst=True)
 df['Ship Date'] = pd.to_datetime(df['Ship Date'], dayfirst=True)
-
 df.head()
 
+# Cell 19 — try this yourself:
 df['Year'] = df['Order Date'].dt.year
 df['Month'] = df['Order Date'].dt.month
 df['Week'] = df['Order Date'].dt.isocalendar().week
 df['DayOfWeek'] = df['Order Date'].dt.dayofweek
 df['dayname'] = df['Order Date'].dt.day_name()
 df['Quarter'] = df['Order Date'].dt.quarter
-
 def get_season(month):
     if month in [12, 1, 2]:
         return 'Winter'
@@ -41,8 +39,8 @@ def get_season(month):
         return 'Fall'
 
 df['season'] = df['Month'].apply(get_season)
+df.head()
 
-df.sample()
 
 daily_sales = (
     df.groupby('Order Date', as_index=False)['Sales']
@@ -57,6 +55,7 @@ weekly_sales = (
 )
 
 weekly_sales.head()
+
 monthly_sales = (
     df.groupby(pd.Grouper(key='Order Date', freq='ME'))['Sales']
       .sum()
@@ -78,6 +77,7 @@ monthly_sales = (
 )
 
 monthly_sales.head()
+
 
 import matplotlib.pyplot as plt
 
@@ -178,7 +178,6 @@ plt.ylabel("Sales")
 plt.grid(True)
 
 plt.show()
-
 plt.figure(figsize=(12,6))
 
 sns.lineplot(
@@ -202,9 +201,7 @@ plt.show()
 
 
 
-
 !pip install statsmodels
-!pip install --upgrade pip
 from statsmodels.tsa.seasonal import seasonal_decompose
 from statsmodels.tsa.stattools import adfuller
 
@@ -227,8 +224,7 @@ plt.plot(
     linewidth=2
 )
 
-plt.title("Monthly sales trend (2014-17)")
-plt.title("Monthly Sales Trend (2014û2017)")
+plt.title("Monthly Sales Trend (2014–2017)")
 plt.xlabel("Date")
 plt.ylabel("Sales")
 plt.grid(True)
@@ -237,11 +233,9 @@ plt.show()
 
 decomposition = seasonal_decompose(
     monthly_sales,
-    model = 'addictive',
+    model='additive',
     period=12
 )
-
-
 fig = decomposition.plot()
 
 fig.set_size_inches(14,10)
@@ -249,22 +243,21 @@ fig.set_size_inches(14,10)
 plt.show()
 
 
+
 result = adfuller(monthly_sales)
 
-print("ADF Statistics :- ", result[0])
-print("P-value :- ", result[1])
-print("Critical values :- ")
+print("ADF Statistic :", result[0])
+print("p-value :", result[1])
+print("Critical Values :")
 
-for key , value in result[4].items() :
+for key, value in result[4].items():
     print(key, ":", value)
 if result[1] < 0.05:
     print("The time series is stationary.")
 else:
     print("The time series is non-stationary.")
 
-
 monthly_sales_diff = monthly_sales.diff().dropna()
-
 plt.figure(figsize=(14,5))
 
 plt.plot(
@@ -289,6 +282,7 @@ for key, value in result_diff[4].items():
 
 
 
+
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 
 from sklearn.metrics import (
@@ -299,7 +293,6 @@ from sklearn.metrics import (
 
 import numpy as np
 import matplotlib.pyplot as plt
-
 monthly_sales = (
     df.groupby('Order Date')['Sales']
       .sum()
@@ -347,8 +340,6 @@ mape = mean_absolute_percentage_error(
 print("MAE :", mae)
 print("RMSE :", rmse)
 print("MAPE :", mape)
-
-
 plt.figure(figsize=(12,6))
 
 plt.plot(
@@ -448,12 +439,12 @@ plt.show()
 !pip install prophet
 
 from prophet import Prophet
-
 prophet_df = monthly_sales.reset_index()
 
 prophet_df.columns = ['ds', 'y']
 
 prophet_df.head()
+
 train_prophet = prophet_df[:-3]
 test_prophet = prophet_df[-3:]
 
@@ -506,6 +497,7 @@ mape_prophet = mean_absolute_percentage_error(
 print("MAE :", mae_prophet)
 print("RMSE :", rmse_prophet)
 print("MAPE :", mape_prophet)
+
 fig = model.plot(forecast)
 plt.title("Prophet Forecast")
 plt.show()
@@ -513,7 +505,19 @@ fig2 = model.plot_components(forecast)
 plt.show()
 
 
+
+import pandas as pd
+import numpy as np
+
 from xgboost import XGBRegressor
+
+from sklearn.metrics import (
+    mean_absolute_error,
+    mean_squared_error,
+    mean_absolute_percentage_error
+)
+
+import matplotlib.pyplot as plt
 
 xgb_df = monthly_sales.reset_index()
 
@@ -604,7 +608,12 @@ comparison_df
 comparison_df.to_csv("model_comparison.csv", index=False)
 
 
+plt.savefig("charts/sarima_forecast.png", dpi=300, bbox_inches="tight")
 
+
+from statsmodels.tsa.statespace.sarimax import SARIMAX
+import matplotlib.pyplot as plt
+import pandas as pd
 
 def sarima_forecast(data, title):
     """
@@ -676,10 +685,566 @@ def sarima_forecast(data, title):
     display(future.to_frame(name="Forecast Sales"))
 
     return future
+
 technology = df[df['Category']=="Technology"]
 
 technology_forecast = sarima_forecast(
     technology,
     "Technology Sales Forecast"
 )
+
+furniture = df[df['Category']=="Furniture"]
+
+furniture_forecast = sarima_forecast(
+    furniture,
+    "Furniture Sales Forecast"
+)
+
+office = df[df['Category']=="Office Supplies"]
+
+office_forecast = sarima_forecast(
+    office,
+    "Office Supplies Sales Forecast"
+)
+
+
+category_forecast = pd.DataFrame({
+    "Technology": technology_forecast.values,
+    "Furniture": furniture_forecast.values,
+    "Office Supplies": office_forecast.values
+})
+
+category_forecast.index = technology_forecast.index
+
+category_forecast
+plt.figure(figsize=(10,5))
+
+for column in category_forecast.columns:
+    plt.plot(
+        category_forecast.index,
+        category_forecast[column],
+        marker='o',
+        linewidth=2,
+        label=column
+    )
+
+plt.title("Category-wise Forecast (Next 3 Months)")
+
+plt.xlabel("Forecast Month")
+
+plt.ylabel("Sales")
+
+plt.legend()
+
+plt.grid(True)
+
+plt.show()
+
+
+west = df[df['Region'] == 'West']
+
+west_forecast = sarima_forecast(
+    west,
+    "West Region Sales Forecast"
+)
+east = df[df['Region'] == 'East']
+
+east_forecast = sarima_forecast(
+    east,
+    "East Region Sales Forecast"
+)
+central = df[df['Region'] == 'Central']
+
+central_forecast = sarima_forecast(
+    central,
+    "Central Region Sales Forecast"
+)
+south = df[df['Region'] == 'South']
+
+south_forecast = sarima_forecast(
+    south,
+    "South Region Sales Forecast"
+)
+
+region_forecast = pd.DataFrame({
+    "West": west_forecast.values,
+    "East": east_forecast.values,
+    "Central": central_forecast.values,
+    "South": south_forecast.values
+})
+
+region_forecast.index = west_forecast.index
+
+region_forecast
+
+plt.figure(figsize=(10,5))
+
+for column in region_forecast.columns:
+    plt.plot(
+        region_forecast.index,
+        region_forecast[column],
+        marker='o',
+        linewidth=2,
+        label=column
+    )
+
+plt.title("Region-wise Sales Forecast (Next 3 Months)")
+plt.xlabel("Forecast Month")
+plt.ylabel("Sales")
+plt.legend()
+plt.grid(True)
+
+plt.show()
+
+region_forecast = pd.DataFrame({
+    "West": west_forecast.values,
+    "East": east_forecast.values,
+    "Central": central_forecast.values,
+    "South": south_forecast.values
+})
+
+region_forecast.index = west_forecast.index
+
+region_forecast = region_forecast.round(2)
+
+region_forecast
+
+plt.figure(figsize=(12,6))
+
+for column in region_forecast.columns:
+    plt.plot(
+        region_forecast.index,
+        region_forecast[column],
+        marker='o',
+        linewidth=2,
+        label=column
+    )
+
+plt.title("Region-wise Sales Forecast (Next 3 Months)", fontsize=14)
+
+plt.xlabel("Forecast Month")
+
+plt.ylabel("Forecasted Sales")
+
+plt.grid(True, linestyle="--", alpha=0.5)
+
+plt.legend()
+
+plt.show()
+
+
+
+region_forecast = pd.DataFrame({
+    "West": west_forecast.values,
+    "East": east_forecast.values,
+    "Central": central_forecast.values,
+    "South": south_forecast.values
+})
+
+region_forecast.index = west_forecast.index
+
+region_forecast = region_forecast.round(2)
+
+region_forecast
+plt.figure(figsize=(12,6))
+
+for column in region_forecast.columns:
+    plt.plot(region_forecast.index,
+             region_forecast[column],
+             marker='o',
+             linewidth=2,
+             label=column)
+
+plt.title("Region-wise Sales Forecast")
+
+plt.xlabel("Forecast Month")
+
+plt.ylabel("Forecasted Sales")
+
+plt.grid(True)
+
+plt.legend()
+
+plt.show()
+
+category_forecast.to_csv("category_forecast.csv")
+
+region_forecast.to_csv("region_forecast.csv")
+
+monthly_sales = (
+    df.groupby('Order Date')['Sales']
+      .sum()
+      .resample('ME')
+      .sum()
+)
+
+anomaly_df = monthly_sales.to_frame(name='Sales')
+
+anomaly_df.head()
+
+anomaly_df['Rolling Mean'] = anomaly_df['Sales'].rolling(window=3).mean()
+
+anomaly_df['Rolling Std'] = anomaly_df['Sales'].rolling(window=3).std()
+
+anomaly_df.head()
+
+anomaly_df['Z-Score'] = (
+    anomaly_df['Sales'] - anomaly_df['Sales'].mean()
+) / anomaly_df['Sales'].std()
+anomaly_df['Anomaly'] = anomaly_df['Z-Score'].abs() > 2
+
+anomaly_df.head()
+anomalies = anomaly_df[anomaly_df['Anomaly']]
+
+print("Number of anomalies detected:", len(anomalies))
+
+anomalies
+
+plt.figure(figsize=(14,6))
+
+plt.plot(
+    anomaly_df.index,
+    anomaly_df['Sales'],
+    label='Monthly Sales',
+    linewidth=2
+)
+
+plt.scatter(
+    anomalies.index,
+    anomalies['Sales'],
+    color='red',
+    s=100,
+    label='Anomalies',
+    zorder=5
+)
+
+plt.title("Monthly Sales with Detected Anomalies")
+
+plt.xlabel("Date")
+
+plt.ylabel("Sales")
+
+plt.grid(True, linestyle='--', alpha=0.5)
+
+plt.legend()
+
+plt.show()
+
+plt.figure(figsize=(14,6))
+
+plt.plot(
+    anomaly_df.index,
+    anomaly_df['Sales'],
+    label='Sales',
+    linewidth=2
+)
+
+plt.plot(
+    anomaly_df.index,
+    anomaly_df['Rolling Mean'],
+    label='Rolling Mean',
+    linewidth=2
+)
+
+plt.fill_between(
+    anomaly_df.index,
+    anomaly_df['Rolling Mean'] - anomaly_df['Rolling Std'],
+    anomaly_df['Rolling Mean'] + anomaly_df['Rolling Std'],
+    alpha=0.2,
+    label='Rolling Std'
+)
+
+plt.title("Rolling Mean and Standard Deviation")
+
+plt.xlabel("Date")
+
+plt.ylabel("Sales")
+
+plt.grid(True)
+
+plt.legend()
+
+plt.show()
+
+anomaly_df.to_csv("anomaly_detection_results.csv")
+
+
+from sklearn.ensemble import IsolationForest
+weekly_sales = (
+    df.groupby("Order Date")["Sales"]
+      .sum()
+      .resample("W")
+      .sum()
+)
+
+weekly_df = weekly_sales.to_frame(name="Sales")
+
+weekly_df.head()
+iso = IsolationForest(
+    contamination=0.05,
+    random_state=42
+)
+
+weekly_df["Isolation"] = iso.fit_predict(
+    weekly_df[["Sales"]]
+)
+weekly_df["Isolation"] = weekly_df["Isolation"].map({
+    1:"Normal",
+    -1:"Anomaly"
+})
+
+weekly_df.head()
+plt.figure(figsize=(14,6))
+
+plt.plot(
+    weekly_df.index,
+    weekly_df["Sales"],
+    label="Weekly Sales"
+)
+
+anomaly = weekly_df[
+    weekly_df["Isolation"]=="Anomaly"
+]
+
+plt.scatter(
+    anomaly.index,
+    anomaly["Sales"],
+    color="red",
+    s=80,
+    label="Anomaly"
+)
+
+plt.title("Isolation Forest Anomaly Detection")
+
+plt.legend()
+
+plt.grid(True)
+
+plt.show()
+weekly_df["Rolling Mean"] = (
+    weekly_df["Sales"]
+    .rolling(4)
+    .mean()
+)
+
+weekly_df["Rolling Std"] = (
+    weekly_df["Sales"]
+    .rolling(4)
+    .std()
+)
+weekly_df["Z"] = (
+    weekly_df["Sales"]-
+    weekly_df["Rolling Mean"]
+)/weekly_df["Rolling Std"]
+
+weekly_df["Z Anomaly"] = weekly_df["Z"].abs()>2
+
+weekly_df.head()
+plt.figure(figsize=(14,6))
+
+plt.plot(
+    weekly_df.index,
+    weekly_df["Sales"],
+    label="Weekly Sales"
+)
+
+plt.scatter(
+    weekly_df[
+        weekly_df["Z Anomaly"]
+    ].index,
+
+    weekly_df[
+        weekly_df["Z Anomaly"]
+    ]["Sales"],
+
+    color="orange",
+    s=80,
+    label="Z-score Anomaly"
+)
+
+plt.title("Z-score Anomaly Detection")
+
+plt.grid(True)
+
+plt.legend()
+
+plt.show()
+print(
+    "Isolation Forest anomalies:",
+    (weekly_df["Isolation"]=="Anomaly").sum()
+)
+
+print(
+    "Z-score anomalies:",
+    weekly_df["Z Anomaly"].sum()
+)
+weekly_df.to_csv(
+    "weekly_anomaly_detection.csv"
+)
+
+
+
+
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+from sklearn.decomposition import PCA
+
+import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
+
+monthly_subcat = (
+    df.groupby([
+        'Sub-Category',
+        pd.Grouper(key='Order Date', freq='ME')
+    ])['Sales']
+    .sum()
+    .reset_index()
+)
+
+monthly_subcat.head()
+
+feature_df = (
+    monthly_subcat
+    .groupby('Sub-Category')
+    .agg(
+        Total_Sales=('Sales', 'sum'),
+        Avg_Order_Value=('Sales', 'mean'),
+        Sales_Volatility=('Sales', 'std')
+    )
+)
+
+growth = (
+    monthly_subcat
+    .sort_values(['Sub-Category', 'Order Date'])
+)
+
+growth['Growth'] = (
+    growth.groupby('Sub-Category')['Sales']
+    .pct_change()
+)
+
+growth_rate = (
+    growth.groupby('Sub-Category')['Growth']
+    .mean()
+)
+
+feature_df['Growth_Rate'] = growth_rate
+
+feature_df = feature_df.fillna(0)
+
+feature_df.head()
+
+scaler = StandardScaler()
+
+scaled_features = scaler.fit_transform(feature_df)
+
+wcss = []
+
+for k in range(1, 8):
+
+    model = KMeans(
+        n_clusters=k,
+        random_state=42,
+        n_init=10
+    )
+
+    model.fit(scaled_features)
+
+    wcss.append(model.inertia_)
+
+plt.figure(figsize=(8,5))
+
+plt.plot(
+    range(1,8),
+    wcss,
+    marker='o'
+)
+
+plt.title("Elbow Method")
+
+plt.xlabel("Number of Clusters")
+
+plt.ylabel("WCSS")
+
+plt.grid(True)
+
+plt.show()
+
+kmeans = KMeans(
+    n_clusters=3,
+    random_state=42,
+    n_init=10
+)
+
+kmeans.fit(scaled_features)
+
+feature_df["Cluster"] = kmeans.labels_
+
+feature_df.head()
+feature_df.to_csv("demand_segmentation.csv")
+
+pca = PCA(n_components=2)
+
+pca_features = pca.fit_transform(scaled_features)
+
+pca_df = pd.DataFrame(
+    pca_features,
+    columns=["PC1","PC2"]
+)
+
+pca_df["Cluster"] = feature_df["Cluster"].values
+
+plt.figure(figsize=(8,6))
+
+for cluster in sorted(pca_df["Cluster"].unique()):
+
+    cluster_data = pca_df[pca_df["Cluster"] == cluster]
+
+    plt.scatter(
+        cluster_data["PC1"],
+        cluster_data["PC2"],
+        label=f"Cluster {cluster}",
+        s=100
+    )
+
+plt.title("Demand Segmentation using PCA")
+
+plt.xlabel("Principal Component 1")
+
+plt.ylabel("Principal Component 2")
+
+plt.legend()
+
+plt.grid(True)
+
+plt.show()
+
+cluster_summary = (
+    feature_df
+    .groupby("Cluster")
+    .mean(numeric_only=True)
+)
+
+cluster_summary
+
+cluster_names = {
+    0: "High Demand",
+    1: "Medium Demand",
+    2: "Low Demand"
+}
+
+feature_df["Demand Segment"] = (
+    feature_df["Cluster"]
+    .map(cluster_names)
+)
+
+feature_df
+
+feature_df.to_csv(
+    "demand_segmentation.csv",
+    index=True
+)
+
+
 
